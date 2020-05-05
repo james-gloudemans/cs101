@@ -3,3 +3,4 @@ cs101.egg-info/
 cs101/__pycache__/
 tests/__pycache__/
 .mypy_cache/
+dist/
