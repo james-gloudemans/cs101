@@ -8,11 +8,9 @@ authors = ["James Gloudemans <james.gloudemans@gmail.com>"]
 python = "^3.8"
 more-itertools = "^8.2.0"
 pytest = "^5.4.1"
-mypy = "^0.770"
-black = "^19.10b0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
+pytest = "^5.4.1"
 mypy = "^0.770"
 black = {version = "^19.10b0", allow-prereleases = true}
 flake8 = "^3.7.9"
