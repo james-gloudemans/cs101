@@ -25,16 +25,16 @@ class BSTMap(MutableMapping[K, Any]):
         """Initialize a new empty tree."""
         self.left: Optional["BSTMap"] = None
         self.right: Optional["BSTMap"] = None
+        self.parent: Optional["BSTMap"] = None
+        self.key: Optional[K] = None
+        self.value: Any = None
         if iterable is not None:
             iterator = iter(iterable)
             init = next(iterator)
-            self.key: Optional[K] = init[0]
-            self.value: Any = init[1]
+            self.key = init[0]
+            self.value = init[1]
             for k, v in iterator:
                 self[k] = v
-        else:
-            self.key = None
-            self.value = None
 
     def __lt__(self, other) -> bool:
         """Return self < other."""
@@ -61,22 +61,28 @@ class BSTMap(MutableMapping[K, Any]):
 
     def __getitem__(self, key: K) -> Any:
         """Return self[key]."""
+        return self._get_node(key).value
+
+    def _get_successor(self) -> "BSTMap":
+        """Return the inorder successor node of self."""
+        return next(self._nodes())
+
+    def _get_node(self, key: K) -> "BSTMap":
+        """Get the node associated with key."""
         if self.key == key:
-            return self.value
-        elif self > key:
+            return self
+        if self < key:
             if self.left is not None:
-                return self.left[key]
+                return self.left._get_node(key)
             else:
                 raise KeyError(f"{key}")
-        else:  # key > self.key
-            if self.right is not None:
-                return self.right[key]
-            else:
-                raise KeyError(f"{key}")
+        if self.right is not None:
+            return self.right._get_node(key)
+        else:
+            raise KeyError(f"{key}")
 
     def __delitem__(self, key: K) -> None:
         """del self[key]."""
-        pass
 
     def __setitem__(self, key: K, value: Any) -> None:
         """Set self[key] = value"""
@@ -85,11 +91,13 @@ class BSTMap(MutableMapping[K, Any]):
         elif self > key:
             if self.left is None:
                 self.left = BSTMap(((key, value),))
+                self.left.parent = self
             else:
                 self.left[key] = value
         else:
             if self.right is None:
                 self.right = BSTMap(((key, value),))
+                self.right.parent = self
             else:
                 self.right[key] = value
 
@@ -138,9 +146,9 @@ class BSTMap(MutableMapping[K, Any]):
     def _isBST(self) -> bool:
         """Does self satisfy the tree invariant?"""
         for node in self._nodes():
-            if node.left and node.key < node.left.key:
+            if node.left and node < node.left:
                 return False
-            if node.right and node.right.key < node.key:
+            if node.right and node.right < node:
                 return False
         return True
 
@@ -156,7 +164,7 @@ class BSTMap(MutableMapping[K, Any]):
 if __name__ == "__main__":
 
     init = [(1, 1), (3, 3), (2, 2)]
-    tree = BSTMap(init)
+    tree = BSTMap[int](init)
     print(tree)
     tree[5] = 5
     print(tree)
