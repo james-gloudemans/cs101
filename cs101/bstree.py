@@ -26,16 +26,20 @@ V = TypeVar("V")
 class BSTMap(MutableMapping[K, V]):
     """A Binary search tree."""
 
-    def __init__(self, iterable: Iterable[Tuple[K, V]]) -> None:
+    def __init__(self, iterable: Optional[Iterable[Tuple[K, V]]]) -> None:
         """Initialize a new empty tree."""
         self.left: Optional["BSTMap"] = None
         self.right: Optional["BSTMap"] = None
-        iterator = iter(iterable)
-        init = next(iterator)
-        self.key: K = init[0]
-        self.value: V = init[1]
-        for k, v in iterator:
-            self[k] = v
+        if iterable is not None:
+            iterator = iter(iterable)
+            init = next(iterator)
+            self.key: Optional[K] = init[0]
+            self.value: Optional[V] = init[1]
+            for k, v in iterator:
+                self[k] = v
+        else:
+            self.key = None
+            self.value = None
 
     def __getitem__(self, key: K) -> V:
         """Return self[key]."""
@@ -45,16 +49,61 @@ class BSTMap(MutableMapping[K, V]):
             if self.left is not None:
                 return self.left[key]
             else:
-                raise KeyError(f"Key {key} not found.")
-        else:
+                raise KeyError(f"{key}")
+        else:  # key > self.key
             if self.right is not None:
                 return self.right[key]
             else:
-                raise KeyError(f"Key {key} not found.")
+                raise KeyError(f"{key}")
 
     def __delitem__(self, key: K) -> None:
         """del self[key]."""
-        pass
+        # I guess I need parents cuz this is stupid, ugh
+        # Find del_node
+        if key < self.key:
+            if self.left is not None:
+                if self.left.key == key:
+                    if self.left.left is None and self.left.right is None:
+                        self.left = None
+                    elif self.left.left is None:
+                        self.left = self.left.left
+                    elif self.left.right is None:
+                        self.left = self.left.right
+                    else:
+                        successor_it = self.left._nodes()
+                        successor = next(successor_it)
+                        successor_child = next(successor_it)
+                        successor_parent = next(successor_it)
+                        successor_parent.left = successor.right
+                        self.left = successor
+                else:
+                    del self.left[key]
+            else:
+                raise KeyError(f"{key}")
+        elif self.key < key:
+            if self.right is not None:
+                if self.right.key == key:
+                    if self.right.left is None and self.right.right is None:
+                        self.right = None
+                    elif self.right.left is None:
+                        self.right = self.right.left
+                    elif self.right.right is None:
+                        self.right = self.right.right
+                    else:
+                        successor_it = self.right._nodes()
+                        successor = next(successor_it)
+                        successor_child = next(successor_it)
+                        successor_parent = next(successor_it)
+                        successor_parent.left = successor.right
+                        self.right = successor
+                else:
+                    del self.right[key]
+            else:
+                raise KeyError(f"{key}")
+        elif self.left is None and self.right is None:  # key == self.key
+            # Delete only node in tree
+            self.key = None
+            self.value = None
 
     def __setitem__(self, key: K, value: V) -> None:
         """Set self[key] = value"""
@@ -135,4 +184,6 @@ if __name__ == "__main__":
     tree = BSTMap[int, int](init)
     print(tree)
     tree[5] = 5
+    print(tree)
+    del tree[1]
     print(tree)
