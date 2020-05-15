@@ -32,8 +32,7 @@ def test_del():
         m = random.choice(init)
         initial = tree[m[0]]
         del tree[m[0]]
-        print(initial, tree[m[0]])
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as e:
             assert tree[m[0]]
         tree[m[0]] = m[1]
 

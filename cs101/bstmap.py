@@ -55,16 +55,13 @@ class BSTMap(MutableMapping[K, Any]):
         """Return self == other."""
         if isinstance(other, Hashable):
             return hash(self.key) == hash(other)
-        else:
-            return False
+        elif isinstance(other, BSTMap):
+            return self.key == other.key
+        return False
 
     def __getitem__(self, key: K) -> Any:
         """Return self[key]."""
         return self._get_node(key).value
-
-    def _get_successor(self) -> "BSTMap":
-        """Return the inorder successor node of self."""
-        return next(self._nodes())
 
     def _get_node(self, key: K) -> "BSTMap":
         """Get the node associated with key."""
@@ -98,7 +95,7 @@ class BSTMap(MutableMapping[K, Any]):
         elif node.right is None:
             node._set_parent_ref(node.left)
         else:  # Node has two children
-            suc = node._get_successor()
+            suc = next(node.right._nodes())
             suc._set_parent_ref(suc.right)
             suc.left = node.left
             suc.right = node.right
@@ -176,10 +173,10 @@ class BSTMap(MutableMapping[K, Any]):
     def _nodes(self) -> Iterator["BSTMap"]:
         """Return an iterator over the nodes of the tree in-order."""
         if self.left is not None:
-            yield from self.left
+            yield from self.left._nodes()
         yield self
         if self.right is not None:
-            yield from self.right
+            yield from self.right._nodes()
 
 
 if __name__ == "__main__":
