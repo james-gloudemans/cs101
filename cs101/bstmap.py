@@ -169,7 +169,7 @@ class BSTMap(MutableMapping[K, Any]):
         for node in self._nodes():
             if node.left and node < node.left:
                 return False
-            if node.right and node.right < node:
+            if node.right and node > node.right:
                 return False
         return True
 
