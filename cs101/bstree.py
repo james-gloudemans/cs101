@@ -9,24 +9,19 @@ from typing import Any, Iterable, Iterator, MutableMapping, Optional, Tuple, Typ
 from btree import BTree
 
 
-class Comparable(ABC):
+class Hashable(ABC):
     @abstractmethod
-    def __lt__(self, other: Any) -> bool:
-        pass
-
-    @abstractmethod
-    def __eq__(self, other: Any) -> bool:
+    def __hash__(self) -> int:
         pass
 
 
-K = TypeVar("K", bound=Comparable)
-V = TypeVar("V")
+K = TypeVar("K", bound=Hashable)
 
 
-class BSTMap(MutableMapping[K, V]):
+class BSTMap(MutableMapping[K, Any]):
     """A Binary search tree."""
 
-    def __init__(self, iterable: Optional[Iterable[Tuple[K, V]]]) -> None:
+    def __init__(self, iterable: Optional[Iterable[Tuple[K, Any]]]) -> None:
         """Initialize a new empty tree."""
         self.left: Optional["BSTMap"] = None
         self.right: Optional["BSTMap"] = None
@@ -34,18 +29,41 @@ class BSTMap(MutableMapping[K, V]):
             iterator = iter(iterable)
             init = next(iterator)
             self.key: Optional[K] = init[0]
-            self.value: Optional[V] = init[1]
+            self.value: Any = init[1]
             for k, v in iterator:
                 self[k] = v
         else:
             self.key = None
             self.value = None
 
-    def __getitem__(self, key: K) -> V:
+    def __lt__(self, other) -> bool:
+        """Return self < other."""
+        if isinstance(other, BSTMap):
+            return hash(self.key) < hash(other.key)
+        if isinstance(other, Hashable):
+            return hash(self.key) < hash(other)
+        return False
+
+    def __gt__(self, other) -> bool:
+        """Return self > other."""
+        if isinstance(other, BSTMap):
+            return hash(self.key) > hash(other.key)
+        if isinstance(other, Hashable):
+            return hash(self.key) > hash(other)
+        return False
+
+    def __eq__(self, other) -> bool:
+        """Return self == other."""
+        if isinstance(other, Hashable):
+            return hash(self.key) == hash(other)
+        else:
+            return False
+
+    def __getitem__(self, key: K) -> Any:
         """Return self[key]."""
         if self.key == key:
             return self.value
-        elif key < self.key:
+        elif self > key:
             if self.left is not None:
                 return self.left[key]
             else:
@@ -58,58 +76,13 @@ class BSTMap(MutableMapping[K, V]):
 
     def __delitem__(self, key: K) -> None:
         """del self[key]."""
-        # I guess I need parents cuz this is stupid, ugh
-        # Find del_node
-        if key < self.key:
-            if self.left is not None:
-                if self.left.key == key:
-                    if self.left.left is None and self.left.right is None:
-                        self.left = None
-                    elif self.left.left is None:
-                        self.left = self.left.left
-                    elif self.left.right is None:
-                        self.left = self.left.right
-                    else:
-                        successor_it = self.left._nodes()
-                        successor = next(successor_it)
-                        successor_child = next(successor_it)
-                        successor_parent = next(successor_it)
-                        successor_parent.left = successor.right
-                        self.left = successor
-                else:
-                    del self.left[key]
-            else:
-                raise KeyError(f"{key}")
-        elif self.key < key:
-            if self.right is not None:
-                if self.right.key == key:
-                    if self.right.left is None and self.right.right is None:
-                        self.right = None
-                    elif self.right.left is None:
-                        self.right = self.right.left
-                    elif self.right.right is None:
-                        self.right = self.right.right
-                    else:
-                        successor_it = self.right._nodes()
-                        successor = next(successor_it)
-                        successor_child = next(successor_it)
-                        successor_parent = next(successor_it)
-                        successor_parent.left = successor.right
-                        self.right = successor
-                else:
-                    del self.right[key]
-            else:
-                raise KeyError(f"{key}")
-        elif self.left is None and self.right is None:  # key == self.key
-            # Delete only node in tree
-            self.key = None
-            self.value = None
+        pass
 
-    def __setitem__(self, key: K, value: V) -> None:
+    def __setitem__(self, key: K, value: Any) -> None:
         """Set self[key] = value"""
-        if self.key == key:
+        if self == key:
             self.value = value
-        elif key < self.key:
+        elif self > key:
             if self.left is None:
                 self.left = BSTMap(((key, value),))
             else:
@@ -124,7 +97,8 @@ class BSTMap(MutableMapping[K, V]):
         """Return iter(self)."""
         if self.left is not None:
             yield from self.left
-        yield self.key
+        if self.key is not None:
+            yield self.key
         if self.right is not None:
             yield from self.right
 
@@ -144,7 +118,7 @@ class BSTMap(MutableMapping[K, V]):
         """Return an iterator over the keys."""
         return iter(self)
 
-    def values(self) -> Iterator[V]:
+    def values(self) -> Iterator[Any]:
         """Return an iterator over the values."""
         if self.left is not None:
             yield from self.left
@@ -152,11 +126,12 @@ class BSTMap(MutableMapping[K, V]):
         if self.right is not None:
             yield from self.right
 
-    def items(self) -> Iterator[Tuple[K, V]]:
+    def items(self) -> Iterator[Tuple[K, Any]]:
         """Return an iterator over key, value tuples."""
         if self.left is not None:
             yield from self.left
-        yield self.key, self.value
+        if self.key is not None:
+            yield self.key, self.value
         if self.right is not None:
             yield from self.right
 
@@ -181,7 +156,7 @@ class BSTMap(MutableMapping[K, V]):
 if __name__ == "__main__":
 
     init = [(1, 1), (3, 3), (2, 2)]
-    tree = BSTMap[int, int](init)
+    tree = BSTMap(init)
     print(tree)
     tree[5] = 5
     print(tree)
