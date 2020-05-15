@@ -16,7 +16,7 @@ def test_build():
         n = random.randrange(1, 10000)
         init.append((n, n))
     tree = BSTMap(init)
-    # assert tree._isBST()
+    assert tree._isBST()
     for key in tree:
         assert tree[key] == key
 
@@ -28,10 +28,12 @@ def test_del():
         n = random.randrange(1, 10000)
         init.append((n, n))
     tree = BSTMap(init)
-    for _ in range(100):
+    for i in range(100):
+        print(i)
         m = random.choice(init)
         initial = tree[m[0]]
         del tree[m[0]]
+        assert tree._isBST()
         with pytest.raises(KeyError) as e:
             assert tree[m[0]]
         tree[m[0]] = m[1]

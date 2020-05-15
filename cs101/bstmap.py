@@ -1,17 +1,11 @@
 """bstmap.py: Implements a binary search tree."""
 # Standard Library
-from abc import ABC, abstractmethod
+from collections.abc import Hashable
 from typing import Any, Iterable, Iterator, MutableMapping, Optional, Tuple, TypeVar
 
 # Third party libraries
 
 # Local imports
-
-
-class Hashable(ABC):
-    @abstractmethod
-    def __hash__(self) -> int:
-        pass
 
 
 K = TypeVar("K", bound=Hashable)
@@ -20,7 +14,7 @@ K = TypeVar("K", bound=Hashable)
 class BSTMap(MutableMapping[K, Any]):
     """A Binary search tree."""
 
-    def __init__(self, iterable: Optional[Iterable[Tuple[K, Any]]]) -> None:
+    def __init__(self, iterable: Optional[Iterable[Tuple[K, Any]]] = None) -> None:
         """Initialize a new empty tree."""
         self.left: Optional["BSTMap"] = None
         self.right: Optional["BSTMap"] = None
@@ -65,9 +59,9 @@ class BSTMap(MutableMapping[K, Any]):
 
     def _get_node(self, key: K) -> "BSTMap":
         """Get the node associated with key."""
-        if self.key == key:
+        if self == key:
             return self
-        if self < key:
+        if self > key:
             if self.left is not None:
                 return self.left._get_node(key)
             else:
@@ -130,7 +124,7 @@ class BSTMap(MutableMapping[K, Any]):
 
     def __len__(self) -> int:
         """Return len(self)."""
-        return len(list(self))
+        return len(dict(self))
 
     def __str__(self) -> str:
         """Return str(self)."""
@@ -147,26 +141,26 @@ class BSTMap(MutableMapping[K, Any]):
     def values(self) -> Iterator[Any]:
         """Return an iterator over the values."""
         if self.left is not None:
-            yield from self.left
+            yield from self.left.values()
         yield self.value
         if self.right is not None:
-            yield from self.right
+            yield from self.right.values()
 
     def items(self) -> Iterator[Tuple[K, Any]]:
         """Return an iterator over key, value tuples."""
         if self.left is not None:
-            yield from self.left
+            yield from self.left.items()
         if self.key is not None:
             yield self.key, self.value
         if self.right is not None:
-            yield from self.right
+            yield from self.right.items()
 
     def _isBST(self) -> bool:
         """Does self satisfy the tree invariant?"""
         for node in self._nodes():
-            if node.left and node < node.left:
+            if node.left is not None and node < node.left:
                 return False
-            if node.right and node > node.right:
+            if node.right is not None and node > node.right:
                 return False
         return True
 
@@ -180,4 +174,9 @@ class BSTMap(MutableMapping[K, Any]):
 
 
 if __name__ == "__main__":
+
+    # lst = ((2, 2), (1, 1), (3, 3))
+    # tree = BSTMap(lst)
+    # print(hash(tree.key), hash(tree.right.key))
+    # print(tree < tree.right)
     pass
