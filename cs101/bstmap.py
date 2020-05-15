@@ -1,4 +1,4 @@
-"""bstree.py: Implements a binary search tree."""
+"""bstmap.py: Implements a binary search tree."""
 # Standard Library
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, Iterator, MutableMapping, Optional, Tuple, TypeVar
@@ -81,8 +81,30 @@ class BSTMap(MutableMapping[K, Any]):
         else:
             raise KeyError(f"{key}")
 
+    def _set_parent_ref(self, node: Optional["BSTMap"]) -> None:
+        """Remove the reference to self from its parent."""
+        if self.parent is not None:
+            if self.parent.left == self:
+                self.parent.left = node
+            if self.parent.right == self:
+                self.parent.right = node
+
     def __delitem__(self, key: K) -> None:
         """del self[key]."""
+        node = self._get_node(key)
+        if node.left is None and node.right is None:
+            node._set_parent_ref(None)
+        elif node.left is None:
+            node._set_parent_ref(node.right)
+        elif node.right is None:
+            node._set_parent_ref(node.left)
+        else:  # Node has two children
+            suc = node._get_successor()
+            suc._set_parent_ref(suc.right)
+            suc.left = node.left
+            suc.right = node.right
+            suc.parent = node.parent
+            node._set_parent_ref(suc)
 
     def __setitem__(self, key: K, value: Any) -> None:
         """Set self[key] = value"""
@@ -162,11 +184,4 @@ class BSTMap(MutableMapping[K, Any]):
 
 
 if __name__ == "__main__":
-
-    init = [(1, 1), (3, 3), (2, 2)]
-    tree = BSTMap[int](init)
-    print(tree)
-    tree[5] = 5
-    print(tree)
-    del tree[1]
-    print(tree)
+    pass
