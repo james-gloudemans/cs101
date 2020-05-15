@@ -47,10 +47,10 @@ class BSTMap(MutableMapping[K, Any]):
 
     def __eq__(self, other) -> bool:
         """Return self == other."""
+        if isinstance(other, BSTMap):
+            return self.key == other.key
         if isinstance(other, Hashable):
             return hash(self.key) == hash(other)
-        elif isinstance(other, BSTMap):
-            return self.key == other.key
         return False
 
     def __getitem__(self, key: K) -> Any:
@@ -71,30 +71,37 @@ class BSTMap(MutableMapping[K, Any]):
         else:
             raise KeyError(f"{key}")
 
-    def _set_parent_ref(self, node: Optional["BSTMap"]) -> None:
-        """Remove the reference to self from its parent."""
-        if self.parent is not None:
-            if self.parent.left == self:
-                self.parent.left = node
-            if self.parent.right == self:
-                self.parent.right = node
-
     def __delitem__(self, key: K) -> None:
         """del self[key]."""
         node = self._get_node(key)
         if node.left is None and node.right is None:
-            node._set_parent_ref(None)
+            if node.parent is None:
+                node.key = None
+                node.value = None
+            else:
+                if node.parent.left == node:
+                    node.parent.left = None
+                if node.parent.right == node:
+                    node.parent.right = None
         elif node.left is None:
-            node._set_parent_ref(node.right)
+            node.key = node.right.key
+            node.value = node.right.value
+            node.left = node.right.left
+            node.right = node.right.right
         elif node.right is None:
-            node._set_parent_ref(node.left)
+            node.key = node.left.key
+            node.value = node.left.value
+            node.right = node.left.right
+            node.left = node.left.left
         else:  # Node has two children
-            suc = next(node.right._nodes())
-            suc._set_parent_ref(suc.right)
-            suc.left = node.left
-            suc.right = node.right
-            suc.parent = node.parent
-            node._set_parent_ref(suc)
+            suc = next(node.right._nodes())  # type: ignore
+            node.key = suc.key
+            node.value = suc.value
+            if suc.right is not None:
+                suc.key = suc.right.key
+                suc.value = suc.right.value
+                suc.left = suc.right.left
+                suc.right = suc.right.right
 
     def __setitem__(self, key: K, value: Any) -> None:
         """Set self[key] = value"""
@@ -175,8 +182,5 @@ class BSTMap(MutableMapping[K, Any]):
 
 if __name__ == "__main__":
 
-    # lst = ((2, 2), (1, 1), (3, 3))
-    # tree = BSTMap(lst)
-    # print(hash(tree.key), hash(tree.right.key))
-    # print(tree < tree.right)
+    # lst = ((2, 2), (1, 1), (3, 3), (4, 4), (6, 6), (5, 5), (7, 7))
     pass
