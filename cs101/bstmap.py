@@ -6,7 +6,6 @@ from typing import Any, Iterable, Iterator, MutableMapping, Optional, Tuple, Typ
 # Third party libraries
 
 # Local imports
-from btree import BTree
 
 
 class Hashable(ABC):
