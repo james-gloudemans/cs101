@@ -1,6 +1,7 @@
 """bstmap.py: Implements a binary search tree."""
 # Standard Library
 from collections.abc import Hashable
+from functools import total_ordering
 from typing import Any, Iterable, Iterator, MutableMapping, Optional, Tuple, TypeVar
 
 # Third party libraries
@@ -11,6 +12,7 @@ from typing import Any, Iterable, Iterator, MutableMapping, Optional, Tuple, Typ
 K = TypeVar("K", bound=Hashable)
 
 
+@total_ordering
 class BSTMap(MutableMapping[K, Any]):
     """A Binary search tree."""
 
@@ -37,18 +39,10 @@ class BSTMap(MutableMapping[K, Any]):
             return hash(self.key) < hash(other)
         return False
 
-    def __gt__(self, other) -> bool:
-        """Return self > other."""
-        if isinstance(other, BSTMap):
-            return hash(self.key) > hash(other.key)
-        if isinstance(other, Hashable):
-            return hash(self.key) > hash(other)
-        return False
-
     def __eq__(self, other) -> bool:
         """Return self == other."""
         if isinstance(other, BSTMap):
-            return self.key == other.key
+            return hash(self.key) == hash(other.key)
         if isinstance(other, Hashable):
             return hash(self.key) == hash(other)
         return False
@@ -57,19 +51,20 @@ class BSTMap(MutableMapping[K, Any]):
         """Return self[key]."""
         return self._get_node(key).value
 
-    def _get_node(self, key: K) -> "BSTMap":
-        """Get the node associated with key."""
+    def __contains__(self, key) -> bool:
+        """Return key in self."""
         if self == key:
-            return self
-        if self > key:
-            if self.left is not None:
-                return self.left._get_node(key)
+            return True
+        elif self < key:
+            if self.right is not None:
+                return key in self.right
             else:
-                raise KeyError(f"{key}")
-        if self.right is not None:
-            return self.right._get_node(key)
+                return False
         else:
-            raise KeyError(f"{key}")
+            if self.left is not None:
+                return key in self.left
+            else:
+                return False
 
     def __delitem__(self, key: K) -> None:
         """del self[key]."""
@@ -81,20 +76,28 @@ class BSTMap(MutableMapping[K, Any]):
             else:
                 if node.parent.left == node:
                     node.parent.left = None
-                if node.parent.right == node:
+                elif node.parent.right == node:
                     node.parent.right = None
-        elif node.left is None:
+        elif node.left is None and node.right is not None:
             node.key = node.right.key
             node.value = node.right.value
             node.left = node.right.left
+            if node.left is not None:
+                node.left.parent = node
             node.right = node.right.right
-        elif node.right is None:
+            if node.right is not None:
+                node.right.parent = node
+        elif node.right is None and node.left is not None:
             node.key = node.left.key
             node.value = node.left.value
             node.right = node.left.right
+            if node.right is not None:
+                node.right.parent = node
             node.left = node.left.left
-        else:  # Node has two children
-            suc = next(node.right._nodes())  # type: ignore
+            if node.left is not None:
+                node.left.parent = node
+        elif node.right is not None and node.left is not None:
+            suc = next(node.right._nodes())
             node.key = suc.key
             node.value = suc.value
             if suc.right is not None:
@@ -102,23 +105,32 @@ class BSTMap(MutableMapping[K, Any]):
                 suc.value = suc.right.value
                 suc.left = suc.right.left
                 suc.right = suc.right.right
+                if suc.left is not None:
+                    suc.left.parent = suc
+                if suc.right is not None:
+                    suc.right.parent = suc
+            elif suc.parent is not None:
+                if suc.parent.right == suc:
+                    suc.parent.right = None
+                elif suc.parent.left == suc:
+                    suc.parent.left = None
 
     def __setitem__(self, key: K, value: Any) -> None:
         """Set self[key] = value"""
         if self == key:
             self.value = value
-        elif self > key:
-            if self.left is None:
-                self.left = BSTMap(((key, value),))
-                self.left.parent = self
+        elif self < key:
+            if self.right is not None:
+                self.right[key] = value
             else:
-                self.left[key] = value
-        else:
-            if self.right is None:
                 self.right = BSTMap(((key, value),))
                 self.right.parent = self
+        else:
+            if self.left is not None:
+                self.left[key] = value
             else:
-                self.right[key] = value
+                self.left = BSTMap(((key, value),))
+                self.left.parent = self
 
     def __iter__(self) -> Iterator[K]:
         """Return iter(self)."""
@@ -165,9 +177,11 @@ class BSTMap(MutableMapping[K, Any]):
     def _isBST(self) -> bool:
         """Does self satisfy the tree invariant?"""
         for node in self._nodes():
-            if node.left is not None and node < node.left:
+            if node.left is not None and node <= node.left:
+                print(node.key, node.left.key)
                 return False
-            if node.right is not None and node > node.right:
+            if node.right is not None and node >= node.right:
+                print(node.key, node.right.key)
                 return False
         return True
 
@@ -179,8 +193,26 @@ class BSTMap(MutableMapping[K, Any]):
         if self.right is not None:
             yield from self.right._nodes()
 
+    def _get_node(self, key: K) -> "BSTMap":
+        """Get the node associated with key."""
+        if self == key:
+            return self
+        elif self < key:
+            if self.right is not None:
+                return self.right._get_node(key)
+            else:
+                raise KeyError(f"{key}")
+        else:
+            if self.left is not None:
+                return self.left._get_node(key)
+            else:
+                raise KeyError(f"{key}")
+
 
 if __name__ == "__main__":
 
-    # lst = ((2, 2), (1, 1), (3, 3), (4, 4), (6, 6), (5, 5), (7, 7))
-    pass
+    lst = [(5, 5), (1, 1), (7, 7), (2, 2), (3, 3), (6, 6), (4, 4)]
+    tree = BSTMap(lst)
+    print(tree._get_node(2) == tree[2])
+    print(tree)
+    # pass
