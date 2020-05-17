@@ -2,7 +2,15 @@
 # Standard Library
 from collections.abc import Hashable
 from functools import total_ordering
-from typing import Any, Iterable, Iterator, MutableMapping, Optional, Tuple, TypeVar
+from typing import (
+    Any,
+    Iterable,
+    Iterator,
+    MutableMapping,
+    Optional,
+    Tuple,
+    TypeVar,
+)
 
 # Third party libraries
 
@@ -126,11 +134,11 @@ class BSTMap(MutableMapping[K, Any]):
         """Return repr(self)."""
         return f"'{str(self)}'"
 
-    def keys(self) -> Iterator[K]:
+    def keys(self) -> Iterator[K]:  # type: ignore
         """Return an iterator over the keys."""
         return iter(self)
 
-    def values(self) -> Iterator[Any]:
+    def values(self) -> Iterator[Any]:  # type: ignore
         """Return an iterator over the values."""
         if self.left is not None:
             yield from self.left.values()
@@ -138,7 +146,7 @@ class BSTMap(MutableMapping[K, Any]):
         if self.right is not None:
             yield from self.right.values()
 
-    def items(self) -> Iterator[Tuple[K, Any]]:
+    def items(self) -> Iterator[Tuple[K, Any]]:  # type: ignore
         """Return an iterator over key, value tuples."""
         if self.left is not None:
             yield from self.left.items()
@@ -150,10 +158,10 @@ class BSTMap(MutableMapping[K, Any]):
     def _isBST(self) -> bool:
         """Does self satisfy the tree invariant?"""
         for node in self._nodes():
-            if node.left is not None and node <= node.left:
+            if node.left is not None and node <= node.left:  # type: ignore
                 print(node.key, node.left.key)
                 return False
-            if node.right is not None and node >= node.right:
+            if node.right is not None and node >= node.right:  # type: ignore
                 print(node.key, node.right.key)
                 return False
         return True
