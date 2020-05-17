@@ -74,46 +74,19 @@ class BSTMap(MutableMapping[K, Any]):
                 node.key = None
                 node.value = None
             else:
-                if node.parent.left == node:
-                    node.parent.left = None
-                elif node.parent.right == node:
-                    node.parent.right = None
+                node._delete_from_parent()
         elif node.left is None and node.right is not None:
-            node.key = node.right.key
-            node.value = node.right.value
-            node.left = node.right.left
-            if node.left is not None:
-                node.left.parent = node
-            node.right = node.right.right
-            if node.right is not None:
-                node.right.parent = node
+            node._replace_with_right()
         elif node.right is None and node.left is not None:
-            node.key = node.left.key
-            node.value = node.left.value
-            node.right = node.left.right
-            if node.right is not None:
-                node.right.parent = node
-            node.left = node.left.left
-            if node.left is not None:
-                node.left.parent = node
-        elif node.right is not None and node.left is not None:
-            suc = next(node.right._nodes())
+            node._replace_with_left()
+        else:  # node has two children
+            suc = next(node.right._nodes())  # type: ignore
             node.key = suc.key
             node.value = suc.value
             if suc.right is not None:
-                suc.key = suc.right.key
-                suc.value = suc.right.value
-                suc.left = suc.right.left
-                suc.right = suc.right.right
-                if suc.left is not None:
-                    suc.left.parent = suc
-                if suc.right is not None:
-                    suc.right.parent = suc
+                suc._replace_with_right()
             elif suc.parent is not None:
-                if suc.parent.right == suc:
-                    suc.parent.right = None
-                elif suc.parent.left == suc:
-                    suc.parent.left = None
+                suc._delete_from_parent()
 
     def __setitem__(self, key: K, value: Any) -> None:
         """Set self[key] = value"""
@@ -207,6 +180,35 @@ class BSTMap(MutableMapping[K, Any]):
                 return self.left._get_node(key)
             else:
                 raise KeyError(f"{key}")
+
+    def _replace_with_right(self):
+        """Replace self with its right child."""
+        self.key = self.right.key
+        self.value = self.right.value
+        self.left = self.right.left
+        if self.left is not None:
+            self.left.parent = self
+        self.right = self.right.right
+        if self.right is not None:
+            self.right.parent = self
+
+    def _replace_with_left(self):
+        """Replace self with its left child."""
+        self.key = self.left.key
+        self.value = self.left.value
+        self.right = self.left.right
+        if self.right is not None:
+            self.right.parent = self
+        self.left = self.left.left
+        if self.left is not None:
+            self.left.parent = self
+
+    def _delete_from_parent(self):
+        """Delete self from its parent node."""
+        if self.parent.left == self:
+            self.parent.left = None
+        if self.parent.right == self:
+            self.parent.right = None
 
 
 if __name__ == "__main__":
